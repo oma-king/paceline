@@ -1,6 +1,6 @@
 # Chrome Web Store listing
 
-Copy each part into the matching field of the [Developer Dashboard](https://chrome.google.com/webstore/devconsole). Images are in this folder: `screenshot-1-popup.png`, `screenshot-2-dashboard.png`, `screenshot-3-hidden-costs.png` (1280 × 800) and `promo-tile-440x280.png`.
+Copy each part into the matching field of the [Developer Dashboard](https://chrome.google.com/webstore/devconsole). Images are in this folder: `screenshot-1-popup.png`, `screenshot-2-dashboard.png`, `screenshot-3-hidden-costs.png` (1280 × 800) and `promo-tile-440x280.png`. The popup and dashboard screenshots show the All, Claude Code and Codex provider tabs.
 
 ## Store listing tab
 
@@ -8,11 +8,11 @@ Copy each part into the matching field of the [Developer Dashboard](https://chro
 
 **Summary** (from the manifest, max. 132 characters):
 
-> See your Claude Code limit at a glance, track Codex sessions, get alerts before you hit it, and learn which sessions burn your tokens.
+> See Claude Code and Codex usage at a glance, switch between providers, get alerts before you hit a limit, and learn which sessions use your tokens.
 
 **Description:**
 
-> Paceline shows how much of your Claude Code usage limit you have used, tracks Claude Code and Codex sessions, warns you before you hit it, and tells you which sessions used your tokens and why.
+> Paceline shows Claude Code and Codex usage side by side or separately. Switch between All, Claude Code and Codex tabs to see provider-specific limits, sessions, costs and exact model names, including the GPT model used by Codex.
 >
 > • A badge on your toolbar with your 5-hour or weekly limit %, in green, orange or red
 > • A forecast ("full ≈ 16:20") when your current pace would run out before the reset

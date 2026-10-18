@@ -1,4 +1,5 @@
 // Made-up data and a launcher for rendering the extension with it: the README and store screenshots share these.
+import { createHash } from 'node:crypto';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,7 +11,9 @@ import { emptyTools, makeDashboard, makeHiddenCosts, makeSnapshot, makeSummary }
 const here = fileURLToPath(new URL('.', import.meta.url));
 const EXT_DIR = join(here, '..', '.output-test', 'chrome-mv3');
 const FAKE_HOST = join(here, '..', 'e2e', 'fake-host.mjs');
-export const EXTENSION_ID = (JSON.parse(readFileSync(join(here, '..', '..', 'shared', 'src', 'extension-ids.json'), 'utf8')) as { dev: string }).dev;
+const devKey = readFileSync(join(here, '..', 'dev-key.txt'), 'utf8').trim();
+const devHex = createHash('sha256').update(Buffer.from(devKey, 'base64')).digest('hex').slice(0, 32);
+export const EXTENSION_ID = [...devHex].map((c) => String.fromCharCode(97 + parseInt(c, 16))).join('');
 const HOST_NAME = 'com.paceline.host';
 
 const MIN = 60_000;
@@ -86,7 +89,8 @@ const topSessions: SessionSummary[] = [
     durationMin: 80,
     turns: 37,
     windowCostUsd: 3.85,
-    models: { 'claude-opus-5-5': 1.2, 'claude-sonnet-5-5': 2.65 },
+    provider: 'codex',
+    models: { 'gpt-5.4': 1.2, 'gpt-5.5': 2.65 },
     score: 91,
     grade: 'A',
   }),
@@ -152,7 +156,7 @@ const sessions: DashboardSession[] = [
   row({ projectName: 'web-app', daysBack: 2, durationMin: 184, turns: 121, costUsd: 18.6, score: 58, grade: 'C', tips: [tipRef('long-session', 'Long session without /clear'), tipRef('long-context', 'Running at very long context')] }),
   row({ projectName: 'api-server', daysBack: 5, durationMin: 142, turns: 96, costUsd: 14.2, score: 74, grade: 'B', tips: [tipRef('mcp-heavy', 'Heavy MCP tool output')] }),
   row({ projectName: 'web-app', daysBack: 0, durationMin: 132, turns: 86, costUsd: 9.42, score: 61, grade: 'C', tips: [tipRef('long-session', 'Long session without /clear'), tipRef('big-reads', 'Large file reads')] }),
-  row({ projectName: 'mobile', daysBack: 8, durationMin: 95, turns: 64, costUsd: 8.75, score: 88, grade: 'A' }),
+  row({ projectName: 'mobile', daysBack: 8, durationMin: 95, turns: 64, costUsd: 8.75, score: 88, grade: 'A', provider: 'codex' }),
   row({ projectName: 'infra', daysBack: 12, durationMin: 70, turns: 41, costUsd: 6.3, score: 47, grade: 'D', tips: [tipRef('noisy-bash', 'Noisy command output'), tipRef('cache-miss', 'Cache expired during pauses')] }),
   row({ projectName: 'design-system', daysBack: 3, durationMin: 66, turns: 38, costUsd: 4.9, score: 82, grade: 'B', tips: [tipRef('re-reads', 'Same file read repeatedly')] }),
   row({ projectName: 'docs-site', daysBack: 1, durationMin: 25, turns: 18, costUsd: 1.12, score: 96, grade: 'A' }),
@@ -183,7 +187,7 @@ const projectRows = projects.map((name, k): DashboardProject => {
 const dashboard = makeDashboard({
   range: '30d',
   days,
-  byModel: { 'claude-opus-5-5': 268, 'claude-sonnet-5-5': 131, 'claude-haiku-5-5': 13 },
+  byModel: { 'claude-opus-5-5': 268, 'claude-sonnet-5-5': 131, 'claude-haiku-5-5': 13, 'gpt-5.4': 42, 'gpt-5.5': 31 },
   byCategory: { read: 1_900_000, edit: 610_000, bash: 820_000, search: 340_000, web: 60_000, mcp: 290_000, agent: 180_000, other: 20_000 },
   heatmap,
   monthToDateUsd: 412,
@@ -202,7 +206,7 @@ export const snapshot = {
       ...makeSnapshot().totals,
       costUsd: topSessions.reduce((sum, x) => sum + x.windowCostUsd, 0),
       sessions: topSessions.length,
-      byModel: { 'claude-opus-5-5': 8.3, 'claude-sonnet-5-5': 13.09, 'claude-haiku-5-5': 0.5 },
+      byModel: { 'claude-opus-5-5': 8.3, 'claude-sonnet-5-5': 13.09, 'claude-haiku-5-5': 0.5, 'gpt-5.4': 1.2, 'gpt-5.5': 2.65 },
     },
     hiddenCosts: makeHiddenCosts(),
   }),
@@ -233,9 +237,14 @@ export const dailyUsage: Record<string, number> = {};
 export async function launchWithFakeHelper(opts: { deviceScaleFactor?: number } = {}): Promise<{ context: BrowserContext; extensionId: string }> {
   const dir = mkdtempSync(join(tmpdir(), 'paceline-shots-'));
   writeFileSync(join(dir, 'snapshot.json'), JSON.stringify(snapshot));
-  const launcher = join(dir, 'fake-host.sh');
-  writeFileSync(launcher, `#!/bin/sh\nexec "${process.execPath}" "${FAKE_HOST}" "${join(dir, 'snapshot.json')}"\n`);
-  chmodSync(launcher, 0o755);
+  const windows = process.platform === 'win32';
+  const launcher = join(dir, windows ? 'fake-host.cmd' : 'fake-host.sh');
+  if (windows) {
+    writeFileSync(launcher, `@"${process.execPath}" "${FAKE_HOST}" "${join(dir, 'snapshot.json')}"\r\n`);
+  } else {
+    writeFileSync(launcher, `#!/bin/sh\nexec "${process.execPath}" "${FAKE_HOST}" "${join(dir, 'snapshot.json')}"\n`);
+    chmodSync(launcher, 0o755);
+  }
   const profile = join(dir, 'profile');
   mkdirSync(join(profile, 'NativeMessagingHosts'), { recursive: true });
   writeFileSync(

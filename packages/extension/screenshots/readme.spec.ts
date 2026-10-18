@@ -23,6 +23,9 @@ test('popup', async () => {
   const page = await context.newPage();
   await page.setViewportSize({ width: 360, height: 600 });
   await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  await page.getByRole('tab', { name: 'All' }).waitFor();
+  await page.getByRole('tab', { name: 'Claude Code' }).waitFor();
+  await page.getByRole('tab', { name: 'Codex' }).waitFor();
   await page.getByText('web-app').waitFor();
   await page.getByText('full ≈').waitFor();
   await page.screenshot({ path: join(OUT_DIR, 'popup.png') });
@@ -32,6 +35,9 @@ test('dashboard', async () => {
   const page = await context.newPage();
   await page.setViewportSize({ width: 1100, height: 900 });
   await page.goto(`chrome-extension://${extensionId}/dashboard.html`);
+  await page.getByRole('tab', { name: 'All' }).waitFor();
+  await page.getByRole('tab', { name: 'Claude Code' }).waitFor();
+  await page.getByRole('tab', { name: 'Codex' }).waitFor();
   await page.getByRole('tab', { name: 'Last 30 days' }).click();
   await page.locator('.value-card .value').waitFor();
   // Show one project's details, without the hover outline or a half-turned chevron.

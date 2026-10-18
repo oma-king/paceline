@@ -12,12 +12,12 @@ It has two parts that work together:
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/popup.png" width="340" alt="Paceline popup: the 5-hour limit at 62% with a warning that it will be full at 16:20, the weekly limit at 38% and on pace, today's budget with a 6-day streak, and the top sessions with their cost, grade and tips">
+  <img src="docs/images/popup.png" width="340" alt="Paceline popup with All, Claude Code and Codex tabs, usage gauges, a forecast, today's budget, and top sessions with their provider, cost, grade and tips">
 </p>
 <p align="center"><sub>The popup: both limits with a forecast, today's budget, and the sessions that used the most, with tips.</sub></p>
 
 <p align="center">
-  <img src="docs/images/dashboard.png" alt="Paceline dashboard for the last 30 days: this month's API value against the plan price, the daily budget strip, daily API value stacked by project, each project's tokens and API value, model mix, tool output, a weekday by hour heatmap and the sessions table with grades and tips">
+  <img src="docs/images/dashboard.png" alt="Paceline dashboard with All, Claude Code and Codex tabs, API value, projects, exact Claude and GPT model names, tool output, a weekday by hour heatmap and sessions with grades and tips">
 </p>
 <p align="center"><sub>The dashboard: 30 days of API value by project, models, tools, when you work, and every session with its grade.</sub></p>
 
