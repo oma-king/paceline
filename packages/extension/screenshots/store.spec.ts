@@ -27,7 +27,7 @@ async function popupShot(name: string, headline: string, subline: string, prepar
   await popup.setViewportSize({ width: 360, height: 600 });
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
   await popup.getByText('web-app').waitFor();
-  await popup.getByText('full ≈').waitFor();
+  await popup.locator('.gauge').first().waitFor();
   await prepare?.(popup);
   const shot = (await popup.screenshot()).toString('base64');
   await popup.close();
@@ -58,7 +58,7 @@ test.afterAll(async () => {
 });
 
 test('screenshot 1: popup', async () => {
-  await popupShot('screenshot-1-popup.png', 'See your Claude Code limit at a glance', "Live 5-hour and weekly usage, a forecast, and today's budget.");
+  await popupShot('screenshot-1-popup.png', 'See Claude Code and Codex at a glance', "Live 5-hour and weekly usage, a forecast, and today's budget.");
 });
 
 test('screenshot 2: dashboard', async () => {
@@ -85,7 +85,7 @@ test('promo tile', async () => {
     background:#1c1917;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#fff;border-bottom:6px solid #ea580c;box-sizing:border-box">
     <img src="data:image/png;base64,${ICON}" width="88" height="88">
     <div style="font-size:40px;font-weight:800;letter-spacing:-0.5px">Paceline</div>
-    <div style="font-size:18px;color:#fdba74">Usage meter for Claude Code</div>
+    <div style="font-size:18px;color:#fdba74">Usage meter for Claude Code and Codex</div>
   </body></html>`);
   await save(page, 'promo-tile-440x280.png', { width: 440, height: 280 });
   await page.close();
