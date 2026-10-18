@@ -1,6 +1,6 @@
 {
   "name": "paceline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local helper for Paceline, the usage meter for Claude Code and Codex",
   "license": "MIT",
   "type": "module",

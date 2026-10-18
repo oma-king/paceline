@@ -3,7 +3,7 @@ import type { AssistantEvent, LogEvent, ToolCall, UserEvent } from './line';
 import { ROUTINE_TOOLS, categorize, mcpServer } from './tools';
 
 // Bump whenever counting changes, so cached per-file states are rebuilt.
-export const ACC_VERSION = 6;
+export const ACC_VERSION = 7;
 const MIN = 60_000;
 export const ACTIVE_GAP_MS = 5 * MIN;
 export const LONG_SESSION_CONTEXT = 80_000;
