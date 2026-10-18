@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Paths } from './paths';
 
@@ -15,7 +15,27 @@ export function writeFileAtomic(path: string, data: string, mode = 0o600): void 
   mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
   writeFileSync(tmp, data, { mode });
-  renameSync(tmp, path);
+  try {
+    if (process.platform !== 'win32') {
+      renameSync(tmp, path);
+      return;
+    }
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        if (existsSync(path)) unlinkSync(path);
+        renameSync(tmp, path);
+        return;
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES') throw error;
+        if (attempt === 4) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
+  } catch (error) {
+    rmSync(tmp, { force: true });
+    throw error;
+  }
 }
 
 export function writeJsonAtomic(path: string, value: unknown): void {
