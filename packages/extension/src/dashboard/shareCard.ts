@@ -23,7 +23,7 @@ export function shareCardModel(data: DashboardData, streak: number, showProjects
   if (category) facts.push({ label: 'Top tool', value: category });
   if (project) facts.push({ label: 'Top project', value: project });
   return {
-    title: data.range === '7d' ? 'My week with Claude Code' : 'My month with Claude Code',
+    title: data.range === '7d' ? 'My week with Claude Code + Codex' : 'My month with Claude Code + Codex',
     value: total >= 10 ? `$${Math.round(total).toLocaleString('en-US')}` : formatUsd(total),
     caption: `of API value in the last ${data.range === '7d' ? 7 : 30} days`,
     facts,
@@ -61,7 +61,7 @@ export function drawShareCard(ctx: CanvasRenderingContext2D, m: ShareCardModel):
   ctx.textAlign = 'right';
   ctx.fillStyle = '#fdba74';
   ctx.font = font(600, 24);
-  ctx.fillText('Paceline · usage meter for Claude Code', SHARE_W - 80, 596);
+  ctx.fillText('Paceline · usage meter for Claude Code + Codex', SHARE_W - 80, 596);
 }
 
 export function renderShareCard(m: ShareCardModel): Promise<Blob> {

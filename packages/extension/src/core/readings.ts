@@ -14,7 +14,7 @@ export const READINGS_MAX = 2_000;
  * on every tick would fake a flat trend. Keeps 24 hours, at most 2,000 entries.
  */
 export function appendReading(readings: Reading[], limits: ResolvedLimits, now: number): Reading[] {
-  const fresh = limits.source === 'claude-code' || limits.source === 'claude-ai';
+  const fresh = limits.source === 'claude-code' || limits.source === 'claude-ai' || limits.source === 'codex' || limits.source === 'mixed';
   const last = readings.at(-1);
   const isNew = fresh && limits.updatedAt !== null && (!last || limits.updatedAt > last.t);
   const next = isNew ? [...readings, { t: limits.updatedAt!, fiveHour: limits.fiveHour, sevenDay: limits.sevenDay }] : readings;

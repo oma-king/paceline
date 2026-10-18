@@ -8,7 +8,7 @@ import { aggregateSessions, computeTotals, toSummary, windowCost } from './analy
 import { assessSession } from './analysis/tips';
 import { readJson } from './fsutil';
 import { isOurStatusLine } from './install/settings';
-import { readLive } from './live';
+import { readLive, refreshCodexLive } from './live';
 import type { Paths } from './paths';
 import { scan } from './scan';
 import { HELPER_VERSION } from './version';
@@ -40,7 +40,8 @@ export async function handleRequest(raw: unknown, d: HandlerDeps): Promise<HostR
   if (!parsed.success) return fail(id, 'BAD_REQUEST', parsed.error.message);
   try {
     const req = parsed.data;
-    const data = req.type === 'ping' ? ping(d) : req.type === 'snapshot' ? snapshot(d, req.window) : dashboard(d, req.range);
+    if (req.type !== 'ping') await refreshCodexLive(d.paths, d.now());
+    const data = req.type === 'ping' ? ping(d) : req.type === 'snapshot' ? snapshot(d, req.window, req.provider ?? 'all') : dashboard(d, req.range, req.provider ?? 'all');
     return { v: PROTOCOL_VERSION, id, ok: true, data };
   } catch (e) {
     return fail(id, 'INTERNAL', e instanceof Error ? e.message : String(e));
@@ -71,11 +72,11 @@ function ping(d: HandlerDeps): PingData {
   };
 }
 
-function snapshot(d: HandlerDeps, window: WindowKey): SnapshotData {
+function snapshot(d: HandlerDeps, window: WindowKey, provider: 'all' | 'claude-code' | 'codex'): SnapshotData {
   const now = d.now();
   const windowStart = now - WINDOW_MS[window];
   const result = scan({ paths: d.paths, now, budgetMs: d.budgetMs });
-  const inWindow = aggregateSessions(result.states).filter((a) => a.endedAt >= windowStart);
+  const inWindow = aggregateSessions(result.states).filter((a) => a.endedAt >= windowStart && (provider === 'all' || a.provider === provider));
   const ranked = inWindow
     .map((a) => ({ a, cost: windowCost(a.hourly, windowStart) }))
     .sort((x, y) => y.cost - x.cost);
@@ -95,8 +96,9 @@ function snapshot(d: HandlerDeps, window: WindowKey): SnapshotData {
   };
 }
 
-function dashboard(d: HandlerDeps, range: DashboardRange): DashboardData {
+function dashboard(d: HandlerDeps, range: DashboardRange, provider: 'all' | 'claude-code' | 'codex'): DashboardData {
   const now = d.now();
   const result = scan({ paths: d.paths, now, budgetMs: d.budgetMs });
-  return buildDashboard(aggregateSessions(result.states), range, now, makeOverheadFor(d.paths), undefined, !result.complete);
+  const aggregates = aggregateSessions(result.states).filter((a) => provider === 'all' || a.provider === provider);
+  return buildDashboard(aggregates, range, now, makeOverheadFor(d.paths), undefined, !result.complete);
 }

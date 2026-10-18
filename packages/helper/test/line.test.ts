@@ -35,6 +35,48 @@ describe('parseLine', () => {
         { id: 't2', name: 'Bash', filePath: null, skill: null },
       ],
     });
+
+  });
+
+  it('reads Codex rollout metadata and token events', () => {
+    expect(parseLine(JSON.stringify({ type: 'session_meta', payload: { cwd: '/repo/codex' } }))).toMatchObject({
+      kind: 'user',
+      cwd: '/repo/codex',
+      entrypoint: 'codex',
+    });
+
+    expect(
+      parseLine(
+        JSON.stringify({
+          type: 'event_msg',
+          timestamp: '2026-10-13T08:00:01.000Z',
+          payload: { type: 'token_count', model: 'gpt-5-codex', total_token_usage: { input_tokens: 10, output_tokens: 20, cached_input_tokens: 3 } },
+        }),
+      ),
+    ).toMatchObject({
+      kind: 'assistant',
+      model: 'gpt-5-codex',
+      usage: { input: 10, output: 20, cacheRead: 3 },
+    });
+  });
+
+  it('reads the GPT model from Codex turn context when token events omit it', () => {
+    expect(
+      parseLine(
+        JSON.stringify({
+          type: 'turn_context',
+          payload: { model: 'gpt-5.6-sol', cwd: '/repo/codex' },
+        }),
+      ),
+    ).toMatchObject({ kind: 'assistant', model: 'gpt-5.6-sol' });
+    expect(
+      parseLine(
+        JSON.stringify({
+          type: 'event_msg',
+          payload: { type: 'token_count', info: { total_token_usage: { input_tokens: 10, output_tokens: 20 } } },
+        }),
+      ),
+    ).toMatchObject({ kind: 'assistant', model: null });
   });
 
   it('counts cache writes without a TTL split as 5-minute writes', () => {

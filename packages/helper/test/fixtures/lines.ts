@@ -97,3 +97,11 @@ export function writeLog(home: string, project: string, sessionId: string, lines
   writeFileSync(file, lines.map((l) => `${l}\n`).join(''));
   return file;
 }
+
+export function writeCodexLog(home: string, sessionId: string, lines: string[]): string {
+  const dir = join(home, '.codex', 'sessions', '2026', '10', '13');
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `rollout-${sessionId}.jsonl`);
+  writeFileSync(file, lines.map((l) => `${l}\n`).join(''));
+  return file;
+}

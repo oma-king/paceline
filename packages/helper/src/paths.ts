@@ -7,6 +7,8 @@ export interface Paths {
   projectsDir: string;
   claudeSettings: string;
   claudeJson: string;
+  codexDir: string;
+  codexSessionsDir: string;
   root: string;
   bin: string;
   cjs: string;
@@ -21,6 +23,7 @@ export interface Paths {
 
 export function resolvePaths(home: string = homedir()): Paths {
   const claudeDir = join(home, '.claude');
+  const codexDir = join(home, '.codex');
   const root = join(home, '.paceline');
   const cacheDir = join(root, 'cache');
   return {
@@ -29,6 +32,8 @@ export function resolvePaths(home: string = homedir()): Paths {
     projectsDir: join(claudeDir, 'projects'),
     claudeSettings: join(claudeDir, 'settings.json'),
     claudeJson: join(home, '.claude.json'),
+    codexDir,
+    codexSessionsDir: join(codexDir, 'sessions'),
     root,
     bin: join(root, 'bin'),
     cjs: join(root, 'paceline.cjs'),

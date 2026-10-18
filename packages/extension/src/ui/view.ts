@@ -5,7 +5,7 @@ import { formatBudgetPct, type HabitSummary } from '../core/habits';
 import { formatAgo, formatClock, formatTokens, formatUsd, type FmtOpts } from '../core/format';
 import type { ResolvedLimits } from '../core/limits';
 
-export type Family = 'opus' | 'sonnet' | 'haiku' | 'fable' | 'other';
+export type Family = 'opus' | 'sonnet' | 'haiku' | 'fable' | 'codex' | 'other';
 
 export function familyOf(model: string): Family {
   const m = model.toLowerCase();
@@ -13,6 +13,7 @@ export function familyOf(model: string): Family {
   if (m.includes('opus')) return 'opus';
   if (m.includes('sonnet')) return 'sonnet';
   if (m.includes('haiku')) return 'haiku';
+  if (m.includes('gpt') || m.includes('codex') || m.startsWith('o3') || m.startsWith('o4')) return 'codex';
   return 'other';
 }
 
@@ -67,11 +68,20 @@ export function sourceLabel(l: ResolvedLimits, now: number): string {
       return 'live from Claude Code';
     case 'claude-ai':
       return 'from claude.ai (unofficial)';
+    case 'codex':
+      return 'live from Codex';
+    case 'mixed':
+      return 'live from Claude Code and Codex';
     case 'stale':
       return l.updatedAt !== null ? `updated ${formatAgo(now - l.updatedAt)}` : 'stale';
     default:
       return 'waiting for data';
   }
+
+}
+
+export function providerLabel(provider: 'claude-code' | 'codex' | undefined): string {
+  return provider === 'codex' ? 'Codex' : 'Claude Code';
 }
 
 /** Why the limit % may be missing or old. Only the terminal CLI runs Claude Code's status line. */

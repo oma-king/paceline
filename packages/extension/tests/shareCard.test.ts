@@ -12,7 +12,7 @@ const data = makeDashboard({
 describe('shareCardModel', () => {
   it('sums up the range and leaves project names out by default', () => {
     expect(shareCardModel(data, 5, false)).toEqual({
-      title: 'My week with Claude Code',
+      title: 'My week with Claude Code + Codex',
       value: '$40',
       caption: 'of API value in the last 7 days',
       facts: [

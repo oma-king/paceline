@@ -6,7 +6,14 @@ const NOW = Date.UTC(2026, 9, 13, 12, 0);
 
 describe('view helpers', () => {
   it('groups model ids into families', () => {
-    expect(['claude-opus-5-5', 'claude-sonnet-4-6', 'claude-haiku-5-5', 'claude-mythos-5-1', 'gpt-x'].map(familyOf)).toEqual(['opus', 'sonnet', 'haiku', 'fable', 'other']);
+    expect(['claude-opus-5-5', 'claude-sonnet-4-6', 'claude-haiku-5-5', 'claude-mythos-5-1', 'gpt-5-codex', 'unknown'].map(familyOf)).toEqual([
+      'opus',
+      'sonnet',
+      'haiku',
+      'fable',
+      'codex',
+      'other',
+    ]);
   });
 
   it('returns model-family cost shares, largest first', () => {

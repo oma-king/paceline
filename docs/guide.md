@@ -117,7 +117,7 @@ When it finishes, the helper is copied to `~/.paceline/`, so it keeps working if
 2. **Send any message in Claude Code, in a terminal.** Within a minute, the Paceline badge shows your limit %.
 3. **Open the popup.** The bottom line says **Connected**, and your recent sessions are listed.
 
-The first time, the helper reads all your session logs from the last 35 days. With a lot of history this takes a minute or two. Until it finishes, the popup says "Indexing your Claude Code history".
+The first time, the helper reads all your Claude Code and Codex session logs from the last 35 days. With a lot of history this takes a minute or two. Until it finishes, the popup says "Indexing your Claude Code and Codex history".
 
 ### 2.4 Using the Claude desktop app or an IDE
 
@@ -250,7 +250,7 @@ Because savings are capped at 60 % of the cost, the lowest possible score is 40,
 | **Threshold** | Your limit crosses 50 %, 80 % and 95 %, once per limit cycle; you can change the levels. The message includes when the limit resets and, when Paceline has a forecast, when you will reach 100 % at your current pace. |
 | **On pace to hit your limit** | At most once per cycle, when your current pace reaches 100 % before the reset: within the next 90 minutes for the 5-hour limit, or the next 24 hours for the weekly one. Not sent when a threshold alert for that limit went out at the same moment. |
 | **Fresh limit! 🎉** | A limit you had been using (at least 50 % by default) resets. Click it for confetti. |
-| **Your week with Claude Code** | The weekly digest; see [4.8](#48-weekly-digest). |
+| **Your week with Claude Code + Codex** | The weekly digest; see [4.8](#48-weekly-digest). |
 
 **Show notifications** in Options turns all of these off. **Quiet hours** hold them back during the hours you choose.
 
@@ -353,7 +353,7 @@ Start with `npx paceline doctor` (from source: `node packages/helper/dist/paceli
 | "Limits refresh when Claude Code runs in a terminal" and the % looks old | You're using the desktop app or an IDE | Turn on the claude.ai fallback ([2.4](#24-using-the-claude-desktop-app-or-an-ide)). |
 | `doctor`: `statusline ✗` | Another tool replaced the status line in `~/.claude/settings.json` | Run install again. Your other status line is kept and still runs. |
 | `doctor`: `rate-limits ✗` | Claude Code hasn't reported limits yet; it only does so on Pro and Max plans | Send a message in a terminal. On an API key this check stays ✗, which is expected. |
-| "Indexing your Claude Code history" | The first read of your logs is in progress | Wait; the popup and dashboard update every few seconds. |
+| "Indexing your Claude Code and Codex history" | The first read of your logs is in progress | Wait; the popup and dashboard update every few seconds. |
 | Forecast says `learning your pace…` | Not enough readings yet | Keep working; it appears after about 10 minutes (5-hour) or a few hours (weekly). |
 | `Could not read Claude Code settings (…). Nothing was changed.` | `~/.claude/settings.json` isn't valid JSON | Fix the file, then run install again. |
 | No notifications at all | Notifications are off in Options, in the browser, or in the OS | Check Options, then your OS notification settings for the browser. |

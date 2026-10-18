@@ -54,7 +54,7 @@ describe('digest timing', () => {
 describe('buildDigest', () => {
   it('summarises last week against the week before', () => {
     expect(buildDigest(weeks(), { [key(9, 14)]: 5 }, 14, WED)).toEqual({
-      title: 'Your week with Claude Code',
+      title: 'Your week with Claude Code + Codex',
       message:
         '$420 of API value across 2 sessions (+20% vs the week before). Top project: shop. Most common tip: Running at very long context. 🔥 1-day streak.',
     });

@@ -107,8 +107,9 @@ describe('heatLevel', () => {
 
 describe('bars and tops', () => {
   it('groups models by family and orders bars by size', () => {
-    expect(modelBars({ 'claude-opus-5-5': 3, 'claude-opus-5': 1, 'claude-sonnet-5-5': 2 })).toEqual([
+    expect(modelBars({ 'claude-opus-5-5': 3, 'claude-opus-5': 1, 'claude-sonnet-5-5': 2, 'gpt-5.4': 4 })).toEqual([
       { label: 'Opus', value: 4 },
+      { label: 'gpt-5.4', value: 4 },
       { label: 'Sonnet', value: 2 },
     ]);
     expect(categoryBars({ ...noCategories, read: 500, mcp: 900 })).toEqual([

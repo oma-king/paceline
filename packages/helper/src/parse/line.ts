@@ -18,7 +18,7 @@ interface EventBase {
 export interface AssistantEvent extends EventBase {
   kind: 'assistant';
   messageId: string;
-  model: string;
+  model: string | null;
   usage: Usage | null;
   tools: ToolCall[];
 }
@@ -43,6 +43,7 @@ export const IMAGE_TOKENS = 1_600;
 
 // Cheap substring test before JSON.parse: most lines (attachments, snapshots) are irrelevant.
 const MARKERS = ['"type":"assistant"', '"type":"user"', '"compact_boundary"'];
+const CODEX_MARKERS = ['"type":"session_meta"', '"type":"response_item"', '"type":"event_msg"', '"type":"turn_context"'];
 const COMMAND = /<command-name>(\/[\w:-]+)<\/command-name>/;
 
 type Json = Record<string, unknown>;
@@ -51,7 +52,7 @@ const num = (x: unknown): number => (typeof x === 'number' && Number.isFinite(x)
 const str = (x: unknown): string | null => (typeof x === 'string' ? x : null);
 
 export function parseLine(line: string): LogEvent | null {
-  if (!MARKERS.some((m) => line.includes(m))) return null;
+  if (!MARKERS.some((m) => line.includes(m)) && !CODEX_MARKERS.some((m) => line.includes(m))) return null;
   let d: unknown;
   try {
     d = JSON.parse(line);
@@ -59,6 +60,7 @@ export function parseLine(line: string): LogEvent | null {
     return { kind: 'malformed' };
   }
   if (!isObj(d)) return { kind: 'malformed' };
+  if (typeof d.type === 'string' && ['session_meta', 'response_item', 'event_msg', 'turn_context'].includes(d.type)) return parseCodex(d);
   const ts = typeof d.timestamp === 'string' ? Date.parse(d.timestamp) : Number.NaN;
   const base: EventBase = {
     ts: Number.isFinite(ts) ? ts : null,
@@ -71,6 +73,73 @@ export function parseLine(line: string): LogEvent | null {
   if (d.type === 'system' && d.subtype === 'compact_boundary') {
     const meta = isObj(d.compactMetadata) ? d.compactMetadata : {};
     return { ...base, kind: 'compact', preTokens: num(meta.preTokens), postTokens: num(meta.postTokens) };
+  }
+
+  /** Adapts Codex rollout records to the provider-neutral accumulator events. */
+  function parseCodex(d: Json): LogEvent | null {
+    const payload = isObj(d.payload) ? d.payload : {};
+    const tsValue = str(d.timestamp) ?? str(payload.timestamp);
+    const rawTs = typeof d.timestamp === 'number' ? d.timestamp : typeof payload.timestamp === 'number' ? payload.timestamp : null;
+    const ts = rawTs !== null ? (rawTs < 10_000_000_000 ? rawTs * 1_000 : rawTs) : tsValue ? Date.parse(tsValue) : Number.NaN;
+    const base: EventBase = {
+      ts: Number.isFinite(ts) ? ts : null,
+      sidechain: false,
+      cwd: str(payload.cwd) ?? str(d.cwd),
+      entrypoint: 'codex',
+    };
+    if (d.type === 'session_meta') return { ...base, kind: 'user', results: [], command: null, skillText: null };
+    if (d.type === 'turn_context') {
+      return {
+        ...base,
+        kind: 'assistant',
+        messageId: `codex-context-${base.ts ?? 0}`,
+        model: str(payload.model),
+        usage: null,
+        tools: [],
+      };
+    }
+    if (d.type === 'response_item') {
+      const role = str(payload.role);
+      if (role === 'user') return { ...base, kind: 'user', results: [], command: null, skillText: null };
+      if (role !== 'assistant') return null;
+      const tools: ToolCall[] = [];
+      if (payload.type === 'function_call' || payload.type === 'tool_call') {
+        const name = str(payload.name) ?? str(payload.function_name);
+        const id = str(payload.call_id) ?? str(payload.id);
+        if (name && id) tools.push({ id, name, filePath: null, skill: null });
+      }
+      return {
+        ...base,
+        kind: 'assistant',
+        messageId: str(payload.id) ?? str(payload.call_id) ?? String(base.ts ?? 0),
+        model: str(payload.model) ?? (isObj(payload.info) ? str(payload.info.model) : null),
+        usage: null,
+        tools,
+      };
+    }
+    if (d.type === 'event_msg' && str(payload.type) === 'token_count') {
+      const info = isObj(payload.info) ? payload.info : {};
+      const usage = isObj(payload.total_token_usage) ? payload.total_token_usage : isObj(info.total_token_usage) ? info.total_token_usage : isObj(payload.token_usage) ? payload.token_usage : payload;
+      return {
+        ...base,
+        kind: 'assistant',
+        messageId: `codex-token-${base.ts ?? 0}`,
+        model: str(payload.model) ?? str(info.model),
+        usage: toCodexUsage(usage),
+        tools: [],
+      };
+    }
+    return null;
+  }
+
+  function toCodexUsage(u: Json): Usage {
+    return {
+      input: num(u.input_tokens) || num(u.prompt_tokens),
+      output: num(u.output_tokens) || num(u.completion_tokens),
+      cacheRead: num(u.cached_input_tokens) || num(u.cache_read_input_tokens),
+      cacheWrite5m: 0,
+      cacheWrite1h: 0,
+    };
   }
   return null;
 }

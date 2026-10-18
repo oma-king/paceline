@@ -4,15 +4,15 @@ Copy each part into the matching field of the [Developer Dashboard](https://chro
 
 ## Store listing tab
 
-**Name** (from the manifest): Paceline — usage meter for Claude Code
+**Name** (from the manifest): Paceline — usage meter for Claude Code and Codex
 
 **Summary** (from the manifest, max. 132 characters):
 
-> See your Claude Code limit at a glance, get alerts before you hit it, and learn which sessions burn your tokens.
+> See your Claude Code limit at a glance, track Codex sessions, get alerts before you hit it, and learn which sessions burn your tokens.
 
 **Description:**
 
-> Paceline shows how much of your Claude Code usage limit you have used, warns you before you hit it, and tells you which sessions used your tokens and why.
+> Paceline shows how much of your Claude Code usage limit you have used, tracks Claude Code and Codex sessions, warns you before you hit it, and tells you which sessions used your tokens and why.
 >
 > • A badge on your toolbar with your 5-hour or weekly limit %, in green, orange or red
 > • A forecast ("full ≈ 16:20") when your current pace would run out before the reset
@@ -39,7 +39,7 @@ Copy each part into the matching field of the [Developer Dashboard](https://chro
 
 **Single purpose:**
 
-> Shows Claude Code usage-limit percentages and per-session token costs from the user's local Claude Code logs, with alerts and tips to reduce usage.
+> Shows Claude Code usage-limit percentages and per-session token costs from the user's local Claude Code and Codex logs, with alerts and tips to reduce usage.
 
 **Permission justifications:**
 

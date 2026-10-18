@@ -5,6 +5,7 @@ import { localDayKey } from '../../src/core/habits';
 import { sortSessions, toCsv, type SortKey } from '../../src/dashboard/model';
 
 const COLUMNS: { label: string; sort: SortKey | null; numeric?: boolean }[] = [
+  { label: 'Source', sort: null },
   { label: 'Project', sort: null },
   { label: 'Started', sort: 'date' },
   { label: 'Duration', sort: 'duration', numeric: true },
@@ -62,6 +63,7 @@ export function SessionsTable({ rows, truncated }: { rows: DashboardSession[]; t
           <tbody>
             {sorted.map((s) => (
               <tr key={s.sessionId}>
+                <td>{s.provider === 'codex' ? 'Codex' : 'Claude Code'}</td>
                 <td>{s.projectName}</td>
                 <td>{started(s.startedAt)}</td>
                 <td className="num">{formatDuration(s.durationMin * 60_000)}</td>

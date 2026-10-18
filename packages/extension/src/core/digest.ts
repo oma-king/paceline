@@ -74,5 +74,5 @@ export function buildDigest(dash: DashboardData, daily: DailyUsage, budgetPct: n
   if (top) parts.push(`Top project: ${top}.`);
   if (tip) parts.push(`Most common tip: ${tip}.`);
   if (streak > 0) parts.push(`🔥 ${streak}-day streak.`);
-  return { title: 'Your week with Claude Code', message: parts.join(' ') };
+  return { title: 'Your week with Claude Code + Codex', message: parts.join(' ') };
 }

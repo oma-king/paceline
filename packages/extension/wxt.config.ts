@@ -24,9 +24,9 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   outDir: store ? '.output-store' : test ? '.output-test' : '.output',
   manifest: {
-    name: 'Paceline — usage meter for Claude Code',
+    name: 'Paceline — usage meter for Claude Code and Codex',
     short_name: 'Paceline',
-    description: 'See your Claude Code limit at a glance, get alerts before you hit it, and learn which sessions burn your tokens.',
+    description: 'See your Claude Code and Codex usage at a glance, get alerts before you hit a limit, and learn which sessions burn your tokens.',
     permissions: ['nativeMessaging', 'storage', 'alarms', 'notifications'],
     optional_host_permissions: ['https://claude.ai/*'],
     icons,

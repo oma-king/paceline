@@ -1,13 +1,13 @@
-# Paceline — usage meter for Claude Code
+# Paceline — usage meter for Claude Code and Codex
 
 [![CI](https://github.com/mn-youssef/paceline/actions/workflows/ci.yml/badge.svg)](https://github.com/mn-youssef/paceline/actions/workflows/ci.yml)
 
-Paceline is a browser extension for Chrome, Edge, Brave and Arc. It shows how much of your Claude Code usage limit you have used, warns you before you hit it, and tells you which sessions used your tokens and why.
+Paceline is a browser extension for Chrome, Edge, Brave and Arc. It shows Claude Code and Codex limits, indexes both session histories, lets you switch between All, Claude Code, and Codex views, warns you before you hit a limit, and tells you which sessions used your tokens and why.
 
 It has two parts that work together:
 
 - **The extension**, in your browser: the toolbar badge, the popup, alerts and the dashboard.
-- **The helper** (`paceline`), a small program on your computer. It reads Claude Code's local session logs and passes the numbers to the extension. It has no server and makes no network requests.
+- **The helper** (`paceline`), a small program on your computer. It reads Claude Code's and Codex's local session logs and passes numbers to the extension. It has no server and makes no network requests.
 
 ## Screenshots
 
@@ -48,11 +48,15 @@ It has two parts that work together:
 - A **weekly digest** every Monday morning.
 - A **share card** image of your week or month.
 
-The dollar amounts are **API value**: what the same tokens would cost at Anthropic's API prices. On a Pro or Max plan that's not what you pay; it's a way to compare sessions and see how much use you get from your plan.
+The dollar amounts are **API value** from the provider's published API price rows, not plan
+billing. On a Pro or Max plan that's not what you pay. When a model is not explicitly listed
+by the provider, Paceline marks the value as estimated rather than presenting it as exact.
+Codex five-hour and seven-day plan limits are separate and come directly from the local Codex
+app-server; they are never estimated from token usage.
 
 ## Requirements
 
-- **Claude Code**, used at least once.
+- **Claude Code** and/or **Codex CLI**, used at least once.
 - A **Pro or Max plan** for the limit %. On an API key, sessions, tips and the dashboard still work.
 - **Node.js 18 or newer** for the helper (`node --version`).
 - **A Chromium browser:** Chrome, Edge, Brave, Chromium, or Arc on macOS.
@@ -119,7 +123,7 @@ It copies itself to `~/.paceline/`, registers with your browsers, adds its statu
 Done. Open the Paceline extension: it should say Connected.
 ```
 
-**7. Check it:** send one message in Claude Code **in a terminal**. Within a minute the badge shows your limit %, and the popup says **Connected**.
+**7. Check it:** send one message in Claude Code **in a terminal** or run a Codex CLI session. Within a minute the dashboard indexes the session; Claude Code terminal usage also supplies the limit %, and the popup says **Connected**.
 
 ### From the Chrome Web Store and npm (coming soon)
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SessionSummary } from '@paceline/shared';
 import { formatAgo, formatDuration, formatUsd } from '../../../src/core/format';
-import { evidenceText, modelMix, topCategories } from '../../../src/ui/view';
+import { evidenceText, modelMix, providerLabel, topCategories } from '../../../src/ui/view';
 
 export function SessionRow({ s, maxCost, now }: { s: SessionSummary; maxCost: number; now: number }) {
   const [open, setOpen] = useState(false);
@@ -11,7 +11,7 @@ export function SessionRow({ s, maxCost, now }: { s: SessionSummary; maxCost: nu
       <button type="button" className="row-head" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="row-title">
           <span className="project" title={s.projectPath}>
-            {s.projectName}
+            {s.projectName} · {providerLabel(s.provider)}
           </span>
           <span className="muted">
             {formatAgo(now - s.endedAt)} · {formatDuration(s.durationMin * 60_000)} · {s.turns} turns

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { finalize } from '../src/parse/accumulator';
 import { resolvePaths } from '../src/paths';
 import { LOCK_STALE_MS, scan } from '../src/scan';
-import { assistantLine, tempHome, writeLog } from './fixtures/lines';
+import { assistantLine, tempHome, writeCodexLog, writeLog } from './fixtures/lines';
 
 const NOW = Date.now();
 const turns = (n: number, from = 0) => Array.from({ length: n }, (_, i) => assistantLine({ id: `m${from + i}`, at: (from + i) * 1_000 }));
@@ -21,6 +21,16 @@ describe('scan', () => {
     const sub = r.states.find((s) => s.isSubagentFile);
     expect(main).toMatchObject({ sessionId: 's1', turns: 3 });
     expect(sub).toMatchObject({ sessionId: 's1', isSubagentFile: true });
+  });
+
+  it('indexes Codex rollout files alongside Claude Code logs', () => {
+    const home = tempHome();
+    writeCodexLog(home, 'c1', [
+      JSON.stringify({ type: 'session_meta', payload: { cwd: '/repo/codex' } }),
+      JSON.stringify({ type: 'event_msg', timestamp: new Date(NOW - 1_000).toISOString(), payload: { type: 'token_count', model: 'gpt-5-codex', total_token_usage: { input_tokens: 10, output_tokens: 20 } } }),
+    ]);
+    const state = scan({ paths: resolvePaths(home), now: NOW }).states.find((s) => s.provider === 'codex');
+    expect(state).toMatchObject({ provider: 'codex', cwd: '/repo/codex', turns: 1, sessionId: 'codex:rollout-c1' });
   });
 
   it('indexes workflow agent logs nested under subagents/', () => {

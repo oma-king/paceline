@@ -12,7 +12,7 @@ import { chromeDeps, openCelebration, openDashboard } from '../src/platform/chro
 export default defineBackground(() => {
   const deps = chromeDeps();
   const enqueue = createSerialQueue();
-  const run = (window?: Parameters<typeof refresh>[1]) => enqueue(() => refresh(deps, window));
+  const run = (window?: Parameters<typeof refresh>[1], provider?: Parameters<typeof refresh>[2]) => enqueue(() => refresh(deps, window, provider));
   const digest = () => enqueue(() => runDigest(deps));
   const start = () => {
     void browser.alarms.create('tick', { periodInMinutes: 1 });
@@ -38,7 +38,7 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((msg: PopupMessage, _sender, sendResponse) => {
     if (msg?.type === 'refresh') {
-      run(msg.window).then(sendResponse, (e: unknown) =>
+      run(msg.window, msg.provider).then(sendResponse, (e: unknown) =>
         sendResponse({ conn: 'error', limits: NO_LIMITS, snapshot: null, errorMessage: String(e), celebratePending: false, forecasts: NO_FORECASTS, habits: NO_HABITS } satisfies RefreshOutcome),
       );
       return true;

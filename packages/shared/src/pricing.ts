@@ -1,4 +1,4 @@
-/** USD per million tokens, from Anthropic's API price list (cached 2026-10-06). */
+/** USD per million tokens, from the provider API price lists (cached 2026-10-06). */
 export interface ModelPrice {
   input: number;
   output: number;
@@ -29,6 +29,12 @@ const row = (input: number, output: number, cacheRead: number): ModelPrice => ({
 });
 
 export const PRICES: Record<string, ModelPrice> = {
+  // Codex API-equivalent pricing is only used for models explicitly listed by OpenAI.
+  'gpt-5.3-codex': row(1.75, 14, 0.175),
+  'gpt-5': row(1.25, 10, 0.125),
+  'gpt-5-mini': row(0.25, 2, 0.025),
+  'o3': row(2, 8, 0.5),
+  'o4-mini': row(1.1, 4.4, 0.275),
   'claude-fable-5-1': row(10, 50, 0.25),
   'claude-mythos-5-1': row(10, 50, 0.25),
   'claude-fable-5': row(10, 50, 1),
@@ -53,6 +59,12 @@ const FAMILY_FALLBACK: [family: string, id: string][] = [
   ['sonnet', 'claude-sonnet-5-5'],
   ['haiku', 'claude-haiku-5-5'],
 ];
+const CODEX_FALLBACK: [family: string, id: string][] = [
+  ['codex', 'gpt-5.3-codex'],
+  ['gpt-5', 'gpt-5'],
+  ['o4-mini', 'o4-mini'],
+  ['o3', 'o3'],
+];
 const DEFAULT_ID = 'claude-sonnet-5-5';
 // What may follow a known id and still mean that model: date stamps and "[1m]"-style tags.
 const ALLOWED_SUFFIX = /^(?:-\d{8}|\[[^\]]*\])*$/;
@@ -73,6 +85,9 @@ export function priceFor(model: string): PriceLookup {
   }
   if (best !== null) return { id: best, price: PRICES[best]!, estimated: false };
   for (const [family, id] of FAMILY_FALLBACK) {
+    if (m.includes(family)) return { id, price: PRICES[id]!, estimated: true };
+  }
+  for (const [family, id] of CODEX_FALLBACK) {
     if (m.includes(family)) return { id, price: PRICES[id]!, estimated: true };
   }
   return { id: DEFAULT_ID, price: PRICES[DEFAULT_ID]!, estimated: true };

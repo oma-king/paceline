@@ -89,7 +89,7 @@ export function forecastWindow(readings: Reading[], window: WindowName, current:
 
 /** Forecasts only from fresh data: a stale reading says nothing about the current pace. */
 export function forecastAll(readings: Reading[], limits: ResolvedLimits, now: number): Forecasts {
-  if (limits.source !== 'claude-code' && limits.source !== 'claude-ai') return NO_FORECASTS;
+  if (limits.source !== 'claude-code' && limits.source !== 'claude-ai' && limits.source !== 'codex' && limits.source !== 'mixed') return NO_FORECASTS;
   return { '5h': forecastWindow(readings, '5h', limits.fiveHour, now), '7d': forecastWindow(readings, '7d', limits.sevenDay, now) };
 }
 

@@ -1,4 +1,4 @@
-import { snapshotDataSchema, type LiveCapture, type SnapshotData, type WindowKey } from '@paceline/shared';
+import { snapshotDataSchema, type LiveCapture, type ProviderFilter, type SnapshotData, type WindowKey } from '@paceline/shared';
 import { EMPTY_ALERTS, alertMessage, evaluateAlerts } from '../core/alerts';
 import { computeBadge, type Badge, type Conn } from '../core/badge';
 import { forecastAll, type Forecasts } from '../core/forecast';
@@ -32,11 +32,11 @@ export interface RefreshOutcome {
   habits: HabitSummary;
 }
 
-export async function refresh(d: RefreshDeps, window: WindowKey = '5h'): Promise<RefreshOutcome> {
+export async function refresh(d: RefreshDeps, window: WindowKey = '5h', provider: ProviderFilter = 'all'): Promise<RefreshOutcome> {
   const now = d.now();
   const settings = mergeSettings(await d.store.get('settings'));
 
-  const res = await callHost(d.send, { type: 'snapshot', window }, snapshotDataSchema);
+  const res = await callHost(d.send, { type: 'snapshot', window, provider }, snapshotDataSchema);
   const conn: Conn = res.ok ? 'ok' : res.kind;
   const snapshot = res.ok ? res.data : null;
   const capture: LiveCapture | null = snapshot?.live.capture ?? (await d.store.get('capture')) ?? null;
@@ -54,7 +54,12 @@ export async function refresh(d: RefreshDeps, window: WindowKey = '5h'): Promise
       fallbackStatus = { lastAttemptAt: now, disabledUntil: now + FALLBACK_COOLDOWN_MS, reason: r.reason };
     }
   }
-  const limits = resolveLimits({ capture, fallback: settings.fallbackEnabled ? fallback : null, now });
+  const limits = resolveLimits({
+    capture: provider === 'codex' ? null : capture,
+    codexCapture: provider === 'claude-code' ? null : snapshot?.live.codexCapture ?? null,
+    fallback: provider === 'codex' || provider === 'claude-code' ? null : settings.fallbackEnabled ? fallback : null,
+    now,
+  });
   const stored = (await d.store.get('readings')) ?? [];
   const readings = appendReading(stored, limits, now);
   const newest = readings.at(-1);

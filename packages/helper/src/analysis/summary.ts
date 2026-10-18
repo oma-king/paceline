@@ -1,10 +1,11 @@
 import { basename } from 'node:path';
-import { TOOL_CATEGORIES, type Grade, type SessionSummary, type Tip, type ToolCategory, type ToolStat, type Totals, type Usage } from '@paceline/shared';
+import { TOOL_CATEGORIES, type Grade, type Provider, type SessionSummary, type Tip, type ToolCategory, type ToolStat, type Totals, type Usage } from '@paceline/shared';
 import { HOUR_MS, emptyHour, finalize, type AccState, type Counter, type HourStats } from '../parse/accumulator';
 
 
 export interface SessionAggregate {
   sessionId: string;
+  provider: Provider;
   projectPath: string;
   entrypoint: string | null;
   startedAt: number;
@@ -105,6 +106,7 @@ export function aggregateSessions(states: AccState[]): SessionAggregate[] {
     const main = group.find((s) => !s.isSubagentFile) ?? group[0]!;
     const a: SessionAggregate = {
       sessionId,
+      provider: main.provider,
       projectPath: main.cwd ?? group.find((s) => s.cwd !== null)?.cwd ?? '(unknown project)',
       entrypoint: main.entrypoint,
       startedAt: group.reduce((m, s) => Math.min(m, s.firstTs ?? Number.POSITIVE_INFINITY), Number.POSITIVE_INFINITY),
@@ -208,6 +210,7 @@ export function toSummary(a: SessionAggregate, windowStart: number, tips: Tip[],
     mcpServers,
     tips,
     pricingEstimated: a.pricingEstimated,
+    provider: a.provider,
     ...quality,
   };
 }

@@ -61,7 +61,8 @@ export function doctor(d: { paths: Paths; os: OS; env: Record<string, string | u
   );
 
   const hasLogs = existsSync(paths.projectsDir);
-  add('logs', hasLogs, hasLogs ? paths.projectsDir : 'No Claude Code session logs found');
+  const hasCodexLogs = existsSync(paths.codexSessionsDir);
+  add('logs', hasLogs || hasCodexLogs, hasLogs || hasCodexLogs ? [hasLogs ? paths.projectsDir : null, hasCodexLogs ? paths.codexSessionsDir : null].filter(Boolean).join(' · ') : 'No Claude Code or Codex session logs found');
 
   const files = Object.values(loadCache(paths.filesCache).files);
   add('index', true, `${files.length} log files indexed, ${files.reduce((n, f) => n + f.state.malformed, 0)} unreadable lines skipped`);

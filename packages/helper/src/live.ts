@@ -1,5 +1,5 @@
 import { liveStateSchema, type LiveCapture, type LiveState, type RateWindow } from '@paceline/shared';
-import { readJson } from './fsutil';
+import { readJson, writeJsonAtomic } from './fsutil';
 import type { Paths } from './paths';
 
 export const EMPTY_LIVE: LiveState = { lastSeenAt: null, capture: null };
@@ -32,4 +32,14 @@ export function captureFromStatusInput(input: unknown, now: number): LiveCapture
     fiveHour,
     sevenDay,
   };
+}
+
+/** Reads Codex's authenticated rate-limit snapshot through its local app-server protocol. */
+export async function refreshCodexLive(paths: Paths, now: number): Promise<LiveCapture | null> {
+  const { readCodexRateLimits } = await import('./codex');
+  const result = await readCodexRateLimits();
+  if (!result.ok) return null;
+  const current = readLive(paths);
+  writeJsonAtomic(paths.live, { ...current, codexCapture: { ...result.capture, capturedAt: now } } satisfies LiveState);
+  return result.capture;
 }

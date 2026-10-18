@@ -110,12 +110,12 @@ export interface Bar {
 }
 
 const bySize = (bars: Bar[]) => bars.filter((b) => b.value > 0).sort((a, b) => b.value - a.value);
-const FAMILY_LABELS: Record<Family, string> = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', other: 'Other' };
+const FAMILY_LABELS: Record<Family, string> = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', codex: 'Codex', other: 'Other' };
 
 export function modelBars(byModel: Record<string, number>): Bar[] {
   const totals = new Map<string, number>();
   for (const [model, usd] of Object.entries(byModel)) {
-    const label = FAMILY_LABELS[familyOf(model)];
+    const label = familyOf(model) === 'codex' ? model : FAMILY_LABELS[familyOf(model)];
     totals.set(label, (totals.get(label) ?? 0) + usd);
   }
   return bySize([...totals].map(([label, value]) => ({ label, value })));

@@ -4,6 +4,7 @@ import { readJson, writeJsonAtomic } from './fsutil';
 import { ACC_VERSION, applyEvent, newAccState, type AccState } from './parse/accumulator';
 import { parseLine } from './parse/line';
 import { readLinesFrom } from './parse/reader';
+import type { Provider } from '@paceline/shared';
 import type { Paths } from './paths';
 
 export const CACHE_VERSION = 1;
@@ -17,6 +18,7 @@ export interface LogFile {
   size: number;
   mtimeMs: number;
   ino: number;
+  provider: Provider;
 }
 
 export interface FileEntry {
@@ -27,6 +29,7 @@ export interface FileEntry {
   ino: number;
   offset: number;
   state: AccState;
+  provider: Provider;
 }
 
 export interface FileCache {
@@ -60,12 +63,12 @@ function entries(dir: string): Dirent[] {
 }
 
 /** ~/.claude/projects/<project>/<session>.jsonl and …/<session>/subagents/**\/*.jsonl, newest first. */
-export function listLogFiles(projectsDir: string, minMtimeMs: number): LogFile[] {
+export function listLogFiles(projectsDir: string, minMtimeMs: number, codexSessionsDir?: string): LogFile[] {
   const out: LogFile[] = [];
-  const push = (path: string, sessionId: string, isSubagent: boolean) => {
+  const push = (path: string, sessionId: string, isSubagent: boolean, provider: Provider) => {
     try {
       const st = statSync(path);
-      if (st.mtimeMs >= minMtimeMs) out.push({ path, sessionId, isSubagent, size: st.size, mtimeMs: st.mtimeMs, ino: st.ino });
+      if (st.mtimeMs >= minMtimeMs) out.push({ path, sessionId, isSubagent, size: st.size, mtimeMs: st.mtimeMs, ino: st.ino, provider });
     } catch {
       // Deleted between readdir and stat.
     }
@@ -74,7 +77,7 @@ export function listLogFiles(projectsDir: string, minMtimeMs: number): LogFile[]
   const collectSubagents = (dir: string, sessionId: string, depth: number) => {
     for (const ent of entries(dir)) {
       const path = join(dir, ent.name);
-      if (ent.isFile() && ent.name.endsWith('.jsonl')) push(path, sessionId, true);
+      if (ent.isFile() && ent.name.endsWith('.jsonl')) push(path, sessionId, true, 'claude-code');
       else if (ent.isDirectory() && depth < 3) collectSubagents(path, sessionId, depth + 1);
     }
   };
@@ -82,9 +85,21 @@ export function listLogFiles(projectsDir: string, minMtimeMs: number): LogFile[]
     if (!project.isDirectory()) continue;
     const projectDir = join(projectsDir, project.name);
     for (const ent of entries(projectDir)) {
-      if (ent.isFile() && ent.name.endsWith('.jsonl')) push(join(projectDir, ent.name), ent.name.slice(0, -'.jsonl'.length), false);
+      if (ent.isFile() && ent.name.endsWith('.jsonl')) push(join(projectDir, ent.name), ent.name.slice(0, -'.jsonl'.length), false, 'claude-code');
       else if (ent.isDirectory()) collectSubagents(join(projectDir, ent.name, 'subagents'), ent.name, 0);
     }
+  }
+  if (codexSessionsDir) {
+    const collectCodex = (dir: string): void => {
+      for (const ent of entries(dir)) {
+        const path = join(dir, ent.name);
+        if (ent.isFile() && ent.name.endsWith('.jsonl')) {
+          const id = ent.name.replace(/\.jsonl$/, '');
+          push(path, `codex:${id}`, false, 'codex');
+        } else if (ent.isDirectory()) collectCodex(path);
+      }
+    };
+    collectCodex(codexSessionsDir);
   }
   return out.sort((a, b) => b.mtimeMs - a.mtimeMs);
 }
@@ -134,7 +149,7 @@ export function scan(o: ScanOptions): ScanResult {
     const clock = o.clock ?? Date.now;
     const start = clock();
     const budget = o.budgetMs ?? Number.POSITIVE_INFINITY;
-    const files = listLogFiles(o.paths.projectsDir, o.now - (o.maxAgeDays ?? 35) * DAY);
+    const files = listLogFiles(o.paths.projectsDir, o.now - (o.maxAgeDays ?? 35) * DAY, o.paths.codexSessionsDir);
     const next: Record<string, FileEntry> = {};
     const unreadable: string[] = [];
     let complete = true;
@@ -143,8 +158,17 @@ export function scan(o: ScanOptions): ScanResult {
 
     for (const f of files) {
       let e = cache.files[f.path];
-      if (!e || e.ino !== f.ino || f.size < e.offset || e.state.v !== ACC_VERSION) {
-        e = { sessionId: f.sessionId, isSubagent: f.isSubagent, size: 0, mtimeMs: 0, ino: f.ino, offset: 0, state: newAccState(f.sessionId, f.isSubagent) };
+      if (!e || e.ino !== f.ino || f.size < e.offset || e.state.v !== ACC_VERSION || e.provider !== f.provider) {
+        e = {
+          sessionId: f.sessionId,
+          isSubagent: f.isSubagent,
+          size: 0,
+          mtimeMs: 0,
+          ino: f.ino,
+          offset: 0,
+          state: newAccState(f.sessionId, f.isSubagent, f.provider),
+          provider: f.provider,
+        };
         changed = true;
       }
       try {

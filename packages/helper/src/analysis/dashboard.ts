@@ -138,6 +138,7 @@ export function buildDashboard(
       score,
       grade,
       tips: tips.map((t) => ({ ruleId: t.ruleId, title: t.title })),
+      provider: a.provider,
     });
   }
 

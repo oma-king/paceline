@@ -7,6 +7,7 @@ export const NO_OVERHEAD: ProjectOverhead = { claudeMd: [], claudeMdTokens: 0, m
 export function makeAgg(over: Partial<SessionAggregate> = {}): SessionAggregate {
   return {
     sessionId: 's1',
+    provider: 'claude-code',
     projectPath: '/repo',
     entrypoint: 'cli',
     startedAt: 0,

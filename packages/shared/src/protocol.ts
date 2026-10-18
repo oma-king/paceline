@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 export const windowKeySchema = z.enum(['5h', '24h', '7d']);
 export type WindowKey = z.infer<typeof windowKeySchema>;
+export const providerSchema = z.enum(['claude-code', 'codex']);
+export type Provider = z.infer<typeof providerSchema>;
+export const providerFilterSchema = z.enum(['all', 'claude-code', 'codex']);
+export type ProviderFilter = z.infer<typeof providerFilterSchema>;
 
 /** One limit window. `resetsAt` is epoch milliseconds. */
 export const rateWindowSchema = z.object({ usedPct: z.number(), resetsAt: z.number() });
@@ -19,6 +23,7 @@ export type LiveCapture = z.infer<typeof liveCaptureSchema>;
 export const liveStateSchema = z.object({
   lastSeenAt: z.number().nullable(),
   capture: liveCaptureSchema.nullable(),
+  codexCapture: liveCaptureSchema.nullable().optional(),
 });
 export type LiveState = z.infer<typeof liveStateSchema>;
 
@@ -69,6 +74,7 @@ export const sessionSummarySchema = z.object({
   pricingEstimated: z.boolean(),
   score: z.number().optional(),
   grade: gradeSchema.optional(),
+  provider: providerSchema.optional(),
 });
 export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 
@@ -127,8 +133,8 @@ export type DashboardRange = z.infer<typeof dashboardRangeSchema>;
 
 export const hostRequestSchema = z.discriminatedUnion('type', [
   z.object({ v: z.number(), id: z.string(), type: z.literal('ping') }),
-  z.object({ v: z.number(), id: z.string(), type: z.literal('snapshot'), window: windowKeySchema }),
-  z.object({ v: z.number(), id: z.string(), type: z.literal('dashboard'), range: dashboardRangeSchema }),
+  z.object({ v: z.number(), id: z.string(), type: z.literal('snapshot'), window: windowKeySchema, provider: providerFilterSchema.optional() }),
+  z.object({ v: z.number(), id: z.string(), type: z.literal('dashboard'), range: dashboardRangeSchema, provider: providerFilterSchema.optional() }),
 ]);
 export type HostRequest = z.infer<typeof hostRequestSchema>;
 
@@ -162,6 +168,7 @@ export const dashboardSessionSchema = z.object({
   score: z.number(),
   grade: gradeSchema,
   tips: z.array(z.object({ ruleId: z.string(), title: z.string() })),
+  provider: providerSchema.optional(),
 });
 export type DashboardSession = z.infer<typeof dashboardSessionSchema>;
 

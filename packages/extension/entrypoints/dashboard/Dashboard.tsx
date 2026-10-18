@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { dashboardDataSchema, type DashboardData, type DashboardRange } from '@paceline/shared';
+import { dashboardDataSchema, type DashboardData, type DashboardRange, type ProviderFilter } from '@paceline/shared';
 import { formatTokens, formatUsd } from '../../src/core/format';
 import type { DailyUsage } from '../../src/core/habits';
 import { mergeSettings, type Settings } from '../../src/core/settings';
@@ -30,6 +30,7 @@ export interface DashboardView {
 
 export function Dashboard({ actions }: { actions?: (view: DashboardView) => ReactNode }) {
   const [range, setRange] = useState<DashboardRange>('7d');
+  const [provider, setProvider] = useState<ProviderFilter>('all');
   const [data, setData] = useState<DashboardData | null>(null);
   const hasData = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export function Dashboard({ actions }: { actions?: (view: DashboardView) => Reac
     let timer: ReturnType<typeof setTimeout> | undefined;
     let failures = 0;
     const load = async () => {
-      const res = await callHost(chromeSend, { type: 'dashboard', range }, dashboardDataSchema);
+      const res = await callHost(chromeSend, { type: 'dashboard', range, provider }, dashboardDataSchema);
       if (cancelled) return;
       if (!res.ok) {
         // Keep the numbers already on screen and try again, waiting longer each time.
@@ -69,7 +70,7 @@ export function Dashboard({ actions }: { actions?: (view: DashboardView) => Reac
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [range]);
+  }, [range, provider]);
 
   const stacked = useMemo(() => (data ? stackByProject(data.days) : null), [data]);
 
@@ -84,18 +85,25 @@ export function Dashboard({ actions }: { actions?: (view: DashboardView) => Reac
             </button>
           ))}
         </div>
+        <div className="tabs" role="tablist" aria-label="Provider">
+          {(['all', 'claude-code', 'codex'] as ProviderFilter[]).map((p) => (
+            <button key={p} type="button" role="tab" aria-selected={provider === p} onClick={() => setProvider(p)}>
+              {p === 'all' ? 'All' : p === 'claude-code' ? 'Claude Code' : 'Codex'}
+            </button>
+          ))}
+        </div>
         {data && settings && actions?.({ data, settings, daily })}
       </header>
       {error && <p className="banner warn">{error}</p>}
       {!data && !error && <p className="muted">Loading…</p>}
       {data && settings && stacked && (
         <>
-          {data.indexing && <p className="banner info">Indexing your Claude Code history. Numbers will fill in shortly.</p>}
+          {data.indexing && <p className="banner info">Indexing your Claude Code and Codex history. Numbers will fill in shortly.</p>}
           <div className="cards">
             <section className="card value-card">
               <h2>Value</h2>
               <p className="value">{planComparison(data.monthToDateUsd, settings.plan)}</p>
-              <p className="muted">API value is what these tokens would cost at Anthropic's API prices, not what you pay.</p>
+              <p className="muted">API value is an estimate using the provider's published API prices, not what you pay.</p>
             </section>
             <HabitsStrip daily={daily} budgetPct={settings.dailyBudgetPct} now={Date.now()} />
           </div>
@@ -106,7 +114,7 @@ export function Dashboard({ actions }: { actions?: (view: DashboardView) => Reac
           <ProjectsCard projects={data.projects} />
           <div className="cards">
             <section className="card">
-              <h2>Models</h2>
+              <h2>Models (Claude Code + Codex)</h2>
               <BarList items={modelBars(data.byModel)} format={formatUsd} label="API value by model" />
             </section>
             <section className="card">
@@ -115,7 +123,7 @@ export function Dashboard({ actions }: { actions?: (view: DashboardView) => Reac
             </section>
           </div>
           <section className="card">
-            <h2>When you use Claude Code</h2>
+            <h2>When you use Claude Code or Codex</h2>
             <Heatmap heatmap={data.heatmap} label="API value by weekday and hour" />
           </section>
           <section className="card">

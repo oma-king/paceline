@@ -50,4 +50,17 @@ describe('resolveLimits', () => {
   it('reports none without readings', () => {
     expect(resolveLimits({ capture: null, fallback: null, now: NOW })).toEqual(NO_LIMITS);
   });
+
+  it('reports both live providers when Claude Code and Codex are available', () => {
+    const codex = capture({
+      capturedAt: NOW,
+      fiveHour: { usedPct: 100, resetsAt: NOW + MIN },
+      sevenDay: { usedPct: 16, resetsAt: NOW + MIN },
+    });
+    expect(resolveLimits({ capture: capture(), codexCapture: codex, fallback: null, now: NOW })).toMatchObject({
+      source: 'mixed',
+      fiveHour: { pct: 100 },
+      sevenDay: { pct: 18 },
+    });
+  });
 });

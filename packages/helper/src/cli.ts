@@ -13,14 +13,14 @@ import { scan } from './scan';
 import { statuslineMain } from './statusline';
 import { HELPER_VERSION } from './version';
 
-const USAGE = `paceline ${HELPER_VERSION}: local helper for Paceline, the usage meter for Claude Code
+const USAGE = `paceline ${HELPER_VERSION}: local helper for Paceline, the usage meter for Claude Code and Codex
 
 Usage:
-  npx paceline install [--extension-id <id>]   Connect Claude Code to the extension
+  npx paceline install [--extension-id <id>]   Connect Claude Code and Codex to the extension
   npx paceline doctor [--json]                 Check the connection
   npx paceline uninstall [--purge]             Remove everything and restore your status line
 
-Called by Claude Code and the browser:
+Called by Claude Code, Codex, and the browser:
   paceline statusline
   paceline host`;
 

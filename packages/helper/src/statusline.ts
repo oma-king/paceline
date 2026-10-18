@@ -32,7 +32,7 @@ export function runStatusLine(d: StatusLineDeps): string {
   const capture = captureFromStatusInput(input, d.now);
   try {
     const previous = readLive(d.paths);
-    writeJsonAtomic(d.paths.live, { lastSeenAt: d.now, capture: capture ?? previous.capture } satisfies LiveState);
+    writeJsonAtomic(d.paths.live, { ...previous, lastSeenAt: d.now, capture: capture ?? previous.capture } satisfies LiveState);
   } catch (e) {
     d.log(`live.json write failed: ${(e as Error).message}`);
   }

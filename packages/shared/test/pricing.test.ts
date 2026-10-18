@@ -19,6 +19,11 @@ describe('priceFor', () => {
     expect(priceFor('claude-haiku-7')).toMatchObject({ id: 'claude-haiku-5-5', estimated: true });
     expect(priceFor('some-other-model')).toMatchObject({ id: 'claude-sonnet-5-5', estimated: true });
   });
+
+  it('prices the officially listed Codex model without estimating', () => {
+    expect(priceFor('gpt-5.3-codex')).toMatchObject({ id: 'gpt-5.3-codex', estimated: false });
+    expect(priceFor('custom-codex-preview')).toMatchObject({ id: 'gpt-5.3-codex', estimated: true });
+  });
 });
 
 describe('costUsd', () => {

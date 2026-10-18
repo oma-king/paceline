@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
-import type { WindowKey } from '@paceline/shared';
+import type { ProviderFilter, WindowKey } from '@paceline/shared';
 import { consumeCelebration, requestRefresh } from '../../src/background/messages';
 import type { RefreshOutcome } from '../../src/background/refresh';
 import { openDashboard } from '../../src/platform/chrome';
@@ -12,21 +12,23 @@ import { HiddenCosts } from './components/HiddenCosts';
 import { Onboarding } from './components/Onboarding';
 import { SessionList } from './components/SessionList';
 import { WindowTabs } from './components/WindowTabs';
+import { ProviderTabs } from './components/ProviderTabs';
 
 export function App() {
   const [selected, setSelected] = useState<WindowKey>('5h');
+  const [provider, setProvider] = useState<ProviderFilter>('all');
   const [outcome, setOutcome] = useState<RefreshOutcome | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [view, setView] = useState<'sessions' | 'hidden'>('sessions');
 
-  const load = useCallback(async (w: WindowKey) => {
-    setOutcome(await requestRefresh(w));
+  const load = useCallback(async (w: WindowKey, p: ProviderFilter) => {
+    setOutcome(await requestRefresh(w, p));
     setNow(Date.now());
   }, []);
 
   useEffect(() => {
-    void load(selected);
-  }, [selected, load]);
+    void load(selected, provider);
+  }, [selected, provider, load]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30_000);
@@ -38,9 +40,9 @@ export function App() {
     if (!outcome) return;
     const waiting = outcome.conn === 'unreachable' || outcome.snapshot?.indexing === true;
     if (!waiting) return;
-    const t = setTimeout(() => void load(selected), outcome.conn === 'unreachable' ? 2_000 : 3_000);
+    const t = setTimeout(() => void load(selected, provider), outcome.conn === 'unreachable' ? 2_000 : 3_000);
     return () => clearTimeout(t);
-  }, [outcome, selected, load]);
+  }, [outcome, selected, provider, load]);
 
   useEffect(() => {
     if (!outcome?.celebratePending) return;
@@ -50,7 +52,7 @@ export function App() {
 
   if (!outcome) return <p className="loading">Loading…</p>;
   const hint = limitsHint(outcome.conn, outcome.limits);
-  if (outcome.conn === 'unreachable' && outcome.limits.source !== 'claude-ai') return <Onboarding onRetry={() => void load(selected)} />;
+  if (outcome.conn === 'unreachable' && outcome.limits.source !== 'claude-ai') return <Onboarding onRetry={() => void load(selected, provider)} />;
 
   return (
     <main>
@@ -58,13 +60,14 @@ export function App() {
         <h1>Paceline</h1>
         <span className="chip-source">{sourceLabel(outcome.limits, now)}</span>
       </header>
+      <ProviderTabs selected={provider} onSelect={setProvider} />
       {outcome.conn === 'mismatch' && (
         <p className="banner warn">
           The helper needs an update. Run <code>npx paceline@latest install</code>
         </p>
       )}
       {outcome.conn === 'error' && <p className="banner warn">Helper error: {outcome.errorMessage}</p>}
-      {outcome.snapshot?.indexing && <p className="banner info">Indexing your Claude Code history. Numbers will fill in shortly.</p>}
+      {outcome.snapshot?.indexing && <p className="banner info">Indexing your Claude Code and Codex history. Numbers will fill in shortly.</p>}
       {hint && <p className="banner info">{hint}</p>}
       <Gauges limits={outcome.limits} forecasts={outcome.forecasts} now={now} />
       {outcome.limits.source !== 'none' && <HabitLine habits={outcome.habits} />}

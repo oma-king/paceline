@@ -1,9 +1,9 @@
-import { PRICES, TOOL_CATEGORIES, costUsd, priceFor, type ModelPrice, type ToolCategory, type Usage } from '@paceline/shared';
+import { PRICES, TOOL_CATEGORIES, costUsd, priceFor, type ModelPrice, type Provider, type ToolCategory, type Usage } from '@paceline/shared';
 import type { AssistantEvent, LogEvent, ToolCall, UserEvent } from './line';
 import { ROUTINE_TOOLS, categorize, mcpServer } from './tools';
 
 // Bump whenever counting changes, so cached per-file states are rebuilt.
-export const ACC_VERSION = 5;
+export const ACC_VERSION = 6;
 const MIN = 60_000;
 export const ACTIVE_GAP_MS = 5 * MIN;
 export const LONG_SESSION_CONTEXT = 80_000;
@@ -63,6 +63,7 @@ export interface PendingTurn {
 
 export interface AccState {
   v: number;
+  provider: Provider;
   sessionId: string;
   isSubagentFile: boolean;
   cwd: string | null;
@@ -111,9 +112,10 @@ export interface AccState {
   pending: PendingTurn | null;
 }
 
-export function newAccState(sessionId: string, isSubagentFile: boolean): AccState {
+export function newAccState(sessionId: string, isSubagentFile: boolean, provider: Provider = 'claude-code'): AccState {
   return {
     v: ACC_VERSION,
+    provider,
     sessionId,
     isSubagentFile,
     cwd: null,
@@ -205,6 +207,7 @@ function touch(s: AccState, ts: number | null, main: boolean): void {
 }
 
 function onAssistant(s: AccState, ev: AssistantEvent, main: boolean): void {
+  if (ev.model) s.lastModel = ev.model;
   if (s.pending && s.pending.messageId === ev.messageId) {
     s.pending.toolNames.push(...ev.tools.map((t) => t.name));
     registerTools(s, ev.tools);
@@ -215,8 +218,9 @@ function onAssistant(s: AccState, ev: AssistantEvent, main: boolean): void {
   s.pending = null;
   registerTools(s, ev.tools);
   if (!ev.usage) return;
-  s.pending = { messageId: ev.messageId, model: ev.model, usage: ev.usage, toolNames: ev.tools.map((t) => t.name), main };
-  countTurn(s, ev.model, ev.usage, ev.ts, main);
+  const model = ev.model ?? s.lastModel ?? 'gpt-5-codex';
+  s.pending = { messageId: ev.messageId, model, usage: ev.usage, toolNames: ev.tools.map((t) => t.name), main };
+  countTurn(s, model, ev.usage, ev.ts, main);
 }
 
 /** The counters for the clock hour containing ts (created on first use), or null without a timestamp. */

@@ -16,17 +16,22 @@ percentages and reset times.
 
 ## What the local helper reads (on your computer only)
 
-- Claude Code session logs in `~/.claude/projects/`, to compute token totals per session.
+- Claude Code session logs in `~/.claude/projects/` and Codex CLI rollout logs in `~/.codex/sessions/`, to compute token totals per session.
 - `~/.claude/settings.json`, to install and later restore its status line.
 - `~/.claude.json` and `.mcp.json`, for the **names** of configured MCP servers only.
 - The **sizes** of `CLAUDE.md` files in your projects.
 - The limit percentages Claude Code passes to its status line.
+- Codex's local app-server, which returns the authenticated account's five-hour and seven-day
+  rate-limit percentages and reset times. Paceline does not read or store Codex credentials.
 
 The helper makes no network requests.
 
 ## What the extension receives from the helper
 
 Numbers (tokens, costs, percentages, times), model names, tool names, MCP server names, and project and file paths. Never your prompts, Claude's replies, or file contents.
+
+Codex plan limits are the exact values returned by the local Codex app-server. They are not
+derived from token counts or API prices.
 
 ## What the extension stores
 

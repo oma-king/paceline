@@ -29,7 +29,7 @@ export function evaluateAlerts(prev: AlertState, limits: ResolvedLimits, thresho
     '7d': { resetsAt: prev['7d'].resetsAt, fired: [...prev['7d'].fired] },
   };
   const fire: Alert[] = [];
-  if (limits.source !== 'claude-code' && limits.source !== 'claude-ai') return { state, fire };
+  if (limits.source !== 'claude-code' && limits.source !== 'claude-ai' && limits.source !== 'codex' && limits.source !== 'mixed') return { state, fire };
   const sorted = [...thresholds].sort((a, b) => a - b);
   for (const [name, w] of [['5h', limits.fiveHour], ['7d', limits.sevenDay]] as const) {
     if (!w) continue;
